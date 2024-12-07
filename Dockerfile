@@ -5,19 +5,19 @@ WORKDIR /app
 # Copy solution file
 COPY ["EMRNext.sln", "./"]
 
-# Copy project files
-COPY ["src/EMRNext.API/EMRNext.API.csproj", "EMRNext.API/"]
-COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "EMRNext.Core/"]
-COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "EMRNext.Infrastructure/"]
-COPY ["src/EMRNext.Shared/EMRNext.Shared.csproj", "EMRNext.Shared/"]
+# Copy project files with explicit paths
+COPY ["src/EMRNext.API/EMRNext.API.csproj", "src/EMRNext.API/"]
+COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "src/EMRNext.Core/"]
+COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "src/EMRNext.Infrastructure/"]
+COPY ["src/EMRNext.Shared/EMRNext.Shared.csproj", "src/EMRNext.Shared/"]
 
 # Restore dependencies
-RUN dotnet restore "EMRNext.API/EMRNext.API.csproj"
+RUN dotnet restore "src/EMRNext.API/EMRNext.API.csproj"
 
-# Copy entire project
+# Copy the entire source directory
 COPY . .
 
-# Set working directory
+# Set working directory for build
 WORKDIR "/app/src/EMRNext.API"
 
 # Build the project
