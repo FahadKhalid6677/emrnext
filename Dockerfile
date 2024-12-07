@@ -9,11 +9,11 @@ WORKDIR /src
 # Debug: print current directory and list contents
 RUN pwd && ls -la
 
-# Explicitly copy nuget.config from the root of the project
-COPY nuget.config /src/nuget.config
+# Copy the entire project directory
+COPY . .
 
-# Debug: verify nuget.config was copied
-RUN ls -la /src
+# Debug: verify nuget.config exists
+RUN ls -la /src/nuget.config
 
 # Copy project files and restore dependencies
 COPY ["src/EMRNext.API/EMRNext.API.csproj", "EMRNext.API/"]
@@ -26,8 +26,6 @@ RUN dotnet restore "EMRNext.API/EMRNext.API.csproj" \
     --verbosity detailed \
     --no-cache
 
-# Copy entire project and build
-COPY . .
 WORKDIR "/src/EMRNext.API"
 RUN dotnet build "EMRNext.API.csproj" \
     -c Release \
