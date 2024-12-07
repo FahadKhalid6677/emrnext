@@ -5,11 +5,12 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["src/EMRNext.API/EMRNext.API.csproj", "src/EMRNext.API/"]
-COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "src/EMRNext.Core/"]
-RUN dotnet restore "src/EMRNext.API/EMRNext.API.csproj"
+COPY ["src/EMRNext.API/EMRNext.API.csproj", "EMRNext.API/"]
+COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "EMRNext.Core/"]
+COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "EMRNext.Infrastructure/"]
+RUN dotnet restore "EMRNext.API/EMRNext.API.csproj"
 COPY . .
-WORKDIR "/src/src/EMRNext.API"
+WORKDIR "/src/EMRNext.API"
 RUN dotnet build "EMRNext.API.csproj" -c Release -o /app/build
 
 FROM build AS publish
