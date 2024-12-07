@@ -307,5 +307,124 @@ namespace EMRNext.Core.Services.Financial
                 .Include(c => c.History)
                 .FirstOrDefaultAsync(c => c.Id == claimId);
         }
+
+        public async Task<string> ProcessEDI999Async(string ediFile)
+        {
+            try 
+            {
+                // Implement EDI 999 processing logic
+                var result = await _ediService.ProcessEDI999Async(ediFile);
+                await _auditService.LogEDIProcessingAsync(ediFile, "EDI999");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await _notificationService.SendSystemAlertAsync($"EDI 999 Processing Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> ProcessClaimBatchAsync(IEnumerable<ClaimRequest> claims)
+        {
+            var processedClaims = new List<Claim>();
+            foreach (var claimRequest in claims)
+            {
+                var claim = await CreateClaimAsync(claimRequest);
+                await SubmitClaimAsync(claim.Id);
+                processedClaims.Add(claim);
+            }
+            
+            await _notificationService.SendBatchProcessingNotificationAsync(processedClaims.Count);
+            return true;
+        }
+
+        public async Task<bool> ProcessPaymentBatchAsync(IEnumerable<ClaimPayment> payments)
+        {
+            foreach (var payment in payments)
+            {
+                await ProcessClaimPaymentAsync(payment);
+            }
+            
+            await _notificationService.SendPaymentBatchNotificationAsync(payments.Count());
+            return true;
+        }
+
+        public async Task<string> ProcessEDIBatchAsync(string ediBatchFile)
+        {
+            try 
+            {
+                var result = await _ediService.ProcessEDIBatchAsync(ediBatchFile);
+                await _auditService.LogEDIProcessingAsync(ediBatchFile, "EDIBatch");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await _notificationService.SendSystemAlertAsync($"EDI Batch Processing Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task SendClaimNotificationAsync(int claimId, string notificationType)
+        {
+            var claim = await GetClaimAsync(claimId);
+            await _notificationService.SendClaimNotificationAsync(claim, notificationType);
+        }
+
+        public async Task SendPaymentNotificationAsync(int claimId)
+        {
+            var claim = await GetClaimAsync(claimId);
+            await _notificationService.SendPaymentNotificationAsync(claim);
+        }
+
+        public async Task SendDenialNotificationAsync(int claimId)
+        {
+            var claim = await GetClaimAsync(claimId);
+            await _notificationService.SendDenialNotificationAsync(claim);
+        }
+
+        public async Task<AnalyticsReport> GenerateAnalyticsReportAsync(AnalyticsRequest request)
+        {
+            // Implement analytics report generation
+            var claims = await _context.Claims
+                .Where(c => c.ServiceDate >= request.StartDate && c.ServiceDate <= request.EndDate)
+                .ToListAsync();
+            
+            return new AnalyticsReport 
+            {
+                TotalClaims = claims.Count,
+                TotalAmount = claims.Sum(c => c.TotalAmount),
+                // Add more analytics calculations
+            };
+        }
+
+        public async Task<IEnumerable<TrendReport>> GetTrendReportsAsync(DateTime startDate, DateTime endDate)
+        {
+            var claims = await _context.Claims
+                .Where(c => c.ServiceDate >= startDate && c.ServiceDate <= endDate)
+                .GroupBy(c => c.ServiceDate.Month)
+                .Select(g => new TrendReport 
+                {
+                    Month = g.Key,
+                    TotalClaims = g.Count(),
+                    TotalAmount = g.Sum(c => c.TotalAmount)
+                })
+                .ToListAsync();
+            
+            return claims;
+        }
+
+        public async Task<PerformanceMetrics> GetPerformanceMetricsAsync()
+        {
+            var totalClaims = await _context.Claims.CountAsync();
+            var processedClaims = await _context.Claims.CountAsync(c => c.Status == ClaimStatus.Processed);
+            var deniedClaims = await _context.Claims.CountAsync(c => c.Status == ClaimStatus.Denied);
+            
+            return new PerformanceMetrics 
+            {
+                TotalClaims = totalClaims,
+                ProcessedClaimsPercentage = (double)processedClaims / totalClaims * 100,
+                DeniedClaimsPercentage = (double)deniedClaims / totalClaims * 100
+            };
+        }
     }
 }
