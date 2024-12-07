@@ -9,25 +9,31 @@ WORKDIR /src
 # Print current directory and list contents
 RUN pwd && ls -la
 
-# Copy solution and project files
+# Create directory structure
+RUN mkdir -p src/EMRNext.API src/EMRNext.Core src/EMRNext.Infrastructure
+
+# Copy solution file
 COPY EMRNext.sln .
+
+# Copy project files with full path preservation
 COPY src/EMRNext.API/EMRNext.API.csproj src/EMRNext.API/
 COPY src/EMRNext.Core/EMRNext.Core.csproj src/EMRNext.Core/
 COPY src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj src/EMRNext.Infrastructure/
 
-# Restore dependencies
-RUN dotnet restore "src/EMRNext.API/EMRNext.API.csproj" \
+# Restore dependencies with full path
+RUN dotnet restore "/src/src/EMRNext.API/EMRNext.API.csproj" \
     --verbosity detailed \
     || (echo "Restore failed. Detailed information:" && \
         echo "Current directory contents:" && ls -la && \
+        echo "Absolute path contents:" && ls -la /src/src/EMRNext.API && \
         echo "Project file contents:" && \
-        cat src/EMRNext.API/EMRNext.API.csproj)
+        cat /src/src/EMRNext.API/EMRNext.API.csproj)
 
 # Copy the entire source code
 COPY . .
 
 # Set working directory to the API project
-WORKDIR "/src/EMRNext.API"
+WORKDIR "/src/src/EMRNext.API"
 
 # Build the project
 RUN dotnet build "EMRNext.API.csproj" \
