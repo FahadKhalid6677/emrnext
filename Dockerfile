@@ -10,10 +10,11 @@ WORKDIR /src
 COPY ["src/EMRNext.API/EMRNext.API.csproj", "EMRNext.API/"]
 COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "EMRNext.Core/"]
 COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "EMRNext.Infrastructure/"]
-COPY ["nuget.config", "./"]
+COPY ["nuget.config", "nuget.config"]
 
 # Restore dependencies with detailed logging and no cache
 RUN dotnet restore "EMRNext.API/EMRNext.API.csproj" \
+    --configfile nuget.config \
     --verbosity detailed \
     --no-cache
 
