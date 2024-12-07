@@ -28,3 +28,6 @@
 # Ignore OS-specific files
 .DS_Store
 Thumbs.db
+
+# Explicitly allow nuget.config
+!nuget.config
