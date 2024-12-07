@@ -12,8 +12,8 @@ RUN pwd && ls -la
 # Copy the entire project directory
 COPY . .
 
-# Debug: verify nuget.config exists
-RUN ls -la /src/nuget.config
+# Debug: verify file locations and contents
+RUN pwd && ls -la && find . -name nuget.config
 
 # Copy project files and restore dependencies
 COPY ["src/EMRNext.API/EMRNext.API.csproj", "EMRNext.API/"]
@@ -22,7 +22,7 @@ COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "EMRNext.Infra
 
 # Restore dependencies with detailed logging and no cache
 RUN dotnet restore "EMRNext.API/EMRNext.API.csproj" \
-    --configfile "/src/nuget.config" \
+    --configfile "nuget.config" \
     --verbosity detailed \
     --no-cache
 
