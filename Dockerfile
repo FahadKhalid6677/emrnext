@@ -9,33 +9,34 @@ WORKDIR /src
 # Print current directory and list contents
 RUN pwd && ls -la
 
-# Ensure solution file exists
+# Copy solution and project files
 COPY EMRNext.sln .
-
-# Copy project files
 COPY src/EMRNext.API/EMRNext.API.csproj src/EMRNext.API/
 COPY src/EMRNext.Core/EMRNext.Core.csproj src/EMRNext.Core/
 COPY src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj src/EMRNext.Infrastructure/
 
 # Restore dependencies
-RUN dotnet restore "EMRNext.sln" \
+RUN dotnet restore "src/EMRNext.API/EMRNext.API.csproj" \
     --verbosity detailed \
     || (echo "Restore failed. Detailed information:" && \
         echo "Current directory contents:" && ls -la && \
-        echo "Solution file contents:" && cat EMRNext.sln && \
         echo "Project file contents:" && \
-        cat src/EMRNext.API/EMRNext.API.csproj && \
-        cat src/EMRNext.Core/EMRNext.Core.csproj && \
-        cat src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj)
+        cat src/EMRNext.API/EMRNext.API.csproj)
 
-# Copy the rest of the source code
+# Copy the entire source code
 COPY . .
 
+# Set working directory to the API project
 WORKDIR "/src/EMRNext.API"
+
+# Build the project
 RUN dotnet build "EMRNext.API.csproj" \
     -c Release \
     -o /app/build \
-    --no-restore
+    --no-restore \
+    || (echo "Build failed. Detailed information:" && \
+        echo "Current directory:" && pwd && \
+        echo "Project file exists:" && ls -l EMRNext.API.csproj)
 
 FROM build AS publish
 RUN dotnet publish "EMRNext.API.csproj" \
