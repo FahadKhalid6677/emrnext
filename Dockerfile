@@ -6,36 +6,39 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 
-# Verbose debug logging
-RUN pwd && ls -la && echo "Current directory contents:"
+# Print current directory and list contents
+RUN pwd && ls -la
 
-# Copy the entire project directory
+# Copy the entire solution and project files
+COPY EMRNext.sln .
+COPY src/EMRNext.API/EMRNext.API.csproj src/EMRNext.API/
+COPY src/EMRNext.Core/EMRNext.Core.csproj src/EMRNext.Core/
+COPY src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj src/EMRNext.Infrastructure/
+
+# Restore dependencies for the entire solution
+RUN dotnet restore EMRNext.sln \
+    --configfile nuget.config \
+    --verbosity detailed \
+    || (echo "Restore failed. Checking solution and project files:" && \
+        cat EMRNext.sln && \
+        cat src/EMRNext.API/EMRNext.API.csproj && \
+        cat src/EMRNext.Core/EMRNext.Core.csproj && \
+        cat src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj)
+
+# Copy the rest of the source code
 COPY . .
-
-# Verbose debug logging
-RUN pwd && ls -la && echo "Checking nuget.config:" && find . -name nuget.config
-
-# Restore dependencies with maximum verbosity and no cache
-RUN dotnet restore "EMRNext.API/EMRNext.API.csproj" \
-    --configfile "nuget.config" \
-    --verbosity diagnostic \
-    --no-cache \
-    || (echo "Restore failed. Checking project files:" && cat "EMRNext.API/EMRNext.API.csproj")
 
 WORKDIR "/src/EMRNext.API"
 RUN dotnet build "EMRNext.API.csproj" \
     -c Release \
     -o /app/build \
-    --verbosity diagnostic \
-    || (echo "Build failed. Checking build logs." && exit 1)
+    --no-restore
 
 FROM build AS publish
 RUN dotnet publish "EMRNext.API.csproj" \
     -c Release \
     -o /app/publish \
-    --no-restore \
-    --verbosity diagnostic \
-    || (echo "Publish failed. Checking publish logs." && exit 1)
+    --no-restore
 
 FROM base AS final
 WORKDIR /app
