@@ -9,18 +9,21 @@ WORKDIR /src
 # Print current directory and list contents
 RUN pwd && ls -la
 
-# Copy the entire solution and project files
+# Ensure solution file exists
 COPY EMRNext.sln .
+
+# Copy project files
 COPY src/EMRNext.API/EMRNext.API.csproj src/EMRNext.API/
 COPY src/EMRNext.Core/EMRNext.Core.csproj src/EMRNext.Core/
 COPY src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj src/EMRNext.Infrastructure/
 
-# Restore dependencies for the entire solution
-RUN dotnet restore EMRNext.sln \
-    --configfile nuget.config \
+# Restore dependencies
+RUN dotnet restore "EMRNext.sln" \
     --verbosity detailed \
-    || (echo "Restore failed. Checking solution and project files:" && \
-        cat EMRNext.sln && \
+    || (echo "Restore failed. Detailed information:" && \
+        echo "Current directory contents:" && ls -la && \
+        echo "Solution file contents:" && cat EMRNext.sln && \
+        echo "Project file contents:" && \
         cat src/EMRNext.API/EMRNext.API.csproj && \
         cat src/EMRNext.Core/EMRNext.Core.csproj && \
         cat src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj)
