@@ -1,0 +1,21 @@
+[build]
+builder = "dotnet"
+buildCommand = "dotnet restore && dotnet publish -c Release -o ./publish"
+startCommand = "dotnet EMRNext.API.dll"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicy = "always"
+
+[env]
+ASPNETCORE_ENVIRONMENT = "Production"
+ASPNETCORE_URLS = "http://0.0.0.0:$PORT"
+DOTNET_RUNNING_IN_CONTAINER = "true"
+DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+
+[runtime]
+minInstances = 1
+maxInstances = 3
+cpuThreshold = 75
+memoryThreshold = 512
