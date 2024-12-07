@@ -2,20 +2,20 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /app
 
-# Copy csproj and restore dependencies
-COPY *.sln ./
+# Copy solution and project files
+COPY EMRNext.sln ./
 COPY src/EMRNext.API/*.csproj ./src/EMRNext.API/
 COPY src/EMRNext.Core/*.csproj ./src/EMRNext.Core/
 COPY src/EMRNext.Infrastructure/*.csproj ./src/EMRNext.Infrastructure/
 COPY src/EMRNext.Shared/*.csproj ./src/EMRNext.Shared/
 
 # Restore dependencies
-RUN dotnet restore "src/EMRNext.API/EMRNext.API.csproj"
+RUN dotnet restore "./src/EMRNext.API/EMRNext.API.csproj"
 
-# Copy remaining files
-COPY . ./
+# Copy the entire project
+COPY . .
 
-# Build and publish the application
+# Build the project
 WORKDIR /app/src/EMRNext.API
 RUN dotnet publish -c Release -o /app/out
 
