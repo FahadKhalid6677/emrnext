@@ -12,21 +12,22 @@ RUN pwd && ls -la
 # Copy entire source directory, preserving structure
 COPY . .
 
-# Verify file structure
-RUN find . -name "EMRNext.API.csproj"
+# Debug: Print out all .csproj files and their locations
+RUN echo "Finding all .csproj files:" && find . -name "*.csproj"
 
-# Restore dependencies
-RUN dotnet restore "./src/EMRNext.API/EMRNext.API.csproj" \
+# Restore dependencies for the solution
+RUN dotnet restore "./EMRNext.sln" \
     --verbosity detailed \
     || (echo "Restore failed. Detailed information:" && \
         echo "Current directory:" && pwd && \
         echo "Directory contents:" && ls -la && \
-        echo "Project file location:" && find . -name "EMRNext.API.csproj" && \
-        echo "Project file contents:" && \
-        cat ./src/EMRNext.API/EMRNext.API.csproj)
+        echo "Project files:" && find . -name "*.csproj")
 
 # Set working directory to the API project
-WORKDIR "/src/EMRNext.API"
+WORKDIR "/src/src/EMRNext.API"
+
+# Debug: Verify current directory and project file
+RUN pwd && ls -la && echo "Project file exists:" && ls -l EMRNext.API.csproj
 
 # Build the project
 RUN dotnet build "EMRNext.API.csproj" \
@@ -35,7 +36,7 @@ RUN dotnet build "EMRNext.API.csproj" \
     --no-restore \
     || (echo "Build failed. Detailed information:" && \
         echo "Current directory:" && pwd && \
-        echo "Project file exists:" && ls -l EMRNext.API.csproj)
+        echo "Project file contents:" && cat EMRNext.API.csproj)
 
 FROM build AS publish
 RUN dotnet publish "EMRNext.API.csproj" \
