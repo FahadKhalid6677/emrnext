@@ -3,7 +3,7 @@
 ## Prerequisites
 - Railway CLI
 - Docker
-- .NET 7.0 SDK
+- .NET 6.0 SDK
 - Node.js 18+
 - PostgreSQL
 
