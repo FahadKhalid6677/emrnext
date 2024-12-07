@@ -1,26 +1,26 @@
 # Use the official .NET 7.0 SDK image for building
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
-WORKDIR /src
+WORKDIR /app
 
-# Copy solution file
+# Copy the solution file
 COPY ["EMRNext.sln", "./"]
 
 # Copy project files
-COPY ["src/EMRNext.API/EMRNext.API.csproj", "EMRNext.API/"]
-COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "EMRNext.Core/"]
-COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "EMRNext.Infrastructure/"]
-COPY ["src/EMRNext.Shared/EMRNext.Shared.csproj", "EMRNext.Shared/"]
+COPY ["src/EMRNext.API/EMRNext.API.csproj", "src/EMRNext.API/"]
+COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "src/EMRNext.Core/"]
+COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "src/EMRNext.Infrastructure/"]
+COPY ["src/EMRNext.Shared/EMRNext.Shared.csproj", "src/EMRNext.Shared/"]
 
 # Restore dependencies
-RUN dotnet restore "EMRNext.sln"
+RUN dotnet restore "src/EMRNext.API/EMRNext.API.csproj"
 
-# Copy entire source code
+# Copy the entire project
 COPY . .
 
-# Set working directory for build
-WORKDIR "/src/src/EMRNext.API"
+# Set working directory
+WORKDIR "/app/src/EMRNext.API"
 
-# Build and publish the project
+# Build the project
 RUN dotnet build "EMRNext.API.csproj" -c Release -o /app/build
 RUN dotnet publish "EMRNext.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
