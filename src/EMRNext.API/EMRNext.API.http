@@ -1,0 +1,6 @@
+@EMRNext.API_HostAddress = http://localhost:5266
+
+GET {{EMRNext.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

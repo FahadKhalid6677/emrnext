@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emrnext-blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: emrnext
+      deployment: blue
+  template:
+    metadata:
+      labels:
+        app: emrnext
+        deployment: blue
+    spec:
+      containers:
+      - name: emrnext
+        image: emrnext:latest
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Production
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: connection-string
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emrnext-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: emrnext
+    deployment: blue
+  ports:
+  - port: 80
+    targetPort: 80

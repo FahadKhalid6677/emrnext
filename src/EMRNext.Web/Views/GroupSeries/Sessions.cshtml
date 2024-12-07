@@ -1,0 +1,310 @@
+@model IEnumerable<EMRNext.Web.Models.GroupSeries.GroupSessionDto>
+@{
+    ViewData["Title"] = "Group Sessions";
+    Layout = "_GroupSeriesLayout";
+    var series = ViewBag.Series as EMRNext.Web.Models.GroupSeries.GroupSeriesDto;
+}
+
+@section Actions {
+    @if (User.IsInRole("Admin") || User.IsInRole("Provider"))
+    {
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-sm btn-primary mr-2" data-toggle="modal" data-target="#generateSessionsModal">
+                <i class="fas fa-plus"></i> Generate Sessions
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="adjustForHolidays()">
+                <i class="fas fa-calendar-check"></i> Adjust for Holidays
+            </button>
+        </div>
+    }
+}
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">@series.Name</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar"></i> @series.StartDate.ToString("MMM dd, yyyy") - @series.EndDate.ToString("MMM dd, yyyy")
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <i class="fas fa-users"></i> Max Participants: @series.MaxParticipants
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <i class="fas fa-map-marker-alt"></i> @series.Location
+                            @if (series.IsVirtual)
+                            {
+                                <span class="badge badge-info ml-1">Virtual</span>
+                            }
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Location</th>
+                        <th>Participants</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var session in Model)
+                    {
+                        <tr>
+                            <td>@session.StartTime.ToString("MMM dd, yyyy")</td>
+                            <td>@session.StartTime.ToString("HH:mm") - @session.EndTime.ToString("HH:mm")</td>
+                            <td>
+                                @if (session.IsVirtual)
+                                {
+                                    <a href="@session.MeetingLink" target="_blank" class="text-info">
+                                        <i class="fas fa-video"></i> Virtual Meeting
+                                    </a>
+                                }
+                                else
+                                {
+                                    @session.Location
+                                }
+                            </td>
+                            <td>
+                                @if (session.Participants?.Any() == true)
+                                {
+                                    <span class="badge badge-primary">@session.Participants.Count</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">0</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(session.Status)">
+                                    @session.Status
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="@Url.Action("SessionDetails", new { id = series.Id, sessionId = session.Id })"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-info-circle"></i>
+                                    </a>
+                                    @if (User.IsInRole("Admin") || User.IsInRole("Provider"))
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                onclick="editSession('@session.Id')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-sm btn-outline-info"
+                                            onclick="viewParticipants('@session.Id')">
+                                        <i class="fas fa-users"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Sessions Modal -->
+<div class="modal fade" id="generateSessionsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Sessions</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" class="form-control" id="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="numberOfSessions">Number of Sessions</label>
+                    <input type="number" class="form-control" id="numberOfSessions" min="1" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="generateSessions()">Generate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Participants Modal -->
+<div class="modal fade" id="participantsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Session Participants</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="participantsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function getStatusBadgeClass(status) {
+            switch (status.toLowerCase()) {
+                case 'scheduled': return 'badge-primary';
+                case 'in progress': return 'badge-info';
+                case 'completed': return 'badge-success';
+                case 'cancelled': return 'badge-danger';
+                default: return 'badge-secondary';
+            }
+        }
+
+        async function generateSessions() {
+            const startDate = document.getElementById('startDate').value;
+            const numberOfSessions = document.getElementById('numberOfSessions').value;
+
+            try {
+                const response = await fetch(`/api/groupseries/@series.Id/sessions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ startDate, numberOfSessions })
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to generate sessions');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while generating sessions');
+            }
+        }
+
+        async function adjustForHolidays() {
+            try {
+                const response = await fetch(`/api/groupseries/@series.Id/holidays`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to adjust for holidays');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while adjusting for holidays');
+            }
+        }
+
+        async function viewParticipants(sessionId) {
+            try {
+                const response = await fetch(`/api/groupseries/@series.Id/participants/${sessionId}`);
+                const participants = await response.json();
+
+                const participantsList = document.getElementById('participantsList');
+                participantsList.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Enrolled</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${participants.map(p => `
+                                    <tr>
+                                        <td>${p.patientName}</td>
+                                        <td>
+                                            <span class="badge ${p.status === 'Active' ? 'badge-success' : 'badge-secondary'}">
+                                                ${p.status}
+                                            </span>
+                                        </td>
+                                        <td>${new Date(p.enrollmentDate).toLocaleDateString()}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    onclick="updateParticipantStatus('${sessionId}', '${p.patientId}')">
+                                                Update Status
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                $('#participantsModal').modal('show');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while loading participants');
+            }
+        }
+
+        async function updateParticipantStatus(sessionId, patientId) {
+            const status = prompt('Enter new status (Active/Absent/Cancelled):');
+            if (!status) return;
+
+            try {
+                const response = await fetch(`/api/groupseries/@series.Id/participants/${sessionId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ patientId, status })
+                });
+
+                if (response.ok) {
+                    viewParticipants(sessionId);
+                } else {
+                    alert('Failed to update participant status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while updating participant status');
+            }
+        }
+    </script>
+}
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "scheduled" => "badge-primary",
+            "in progress" => "badge-info",
+            "completed" => "badge-success",
+            "cancelled" => "badge-danger",
+            _ => "badge-secondary"
+        };
+    }
+}

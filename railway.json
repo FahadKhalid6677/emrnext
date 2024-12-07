@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "name": "emrnext",
+  "services": [
+    {
+      "name": "backend",
+      "dockerfile": "./Dockerfile.backend",
+      "port": 5000,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Production",
+        "ASPNETCORE_URLS": "http://+:5000"
+      }
+    },
+    {
+      "name": "frontend",
+      "dockerfile": "./Dockerfile.frontend",
+      "port": 3000,
+      "env": {
+        "NODE_ENV": "production",
+        "REACT_APP_API_URL": "${backend.RAILWAY_PUBLIC_URL}/api"
+      }
+    },
+    {
+      "name": "database",
+      "image": "postgres:15",
+      "port": 5432,
+      "env": {
+        "POSTGRES_DB": "emrnext",
+        "POSTGRES_USER": "emrnext_user"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend"
+    }
+  ]
+}

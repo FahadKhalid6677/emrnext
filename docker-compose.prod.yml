@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/EMRNext.API/Dockerfile
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      - db
+      - redis
+      - seq
+    volumes:
+      - ${CERT_PATH}:/https:ro
+    networks:
+      - emrnext-network
+
+  web:
+    build:
+      context: .
+      dockerfile: src/EMRNext.Web/Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+      - API_URL=https://api.emrnext.com
+    networks:
+      - emrnext-network
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${DB_PASSWORD}
+      - MSSQL_PID=Express
+    volumes:
+      - sqldata:/var/opt/mssql
+    networks:
+      - emrnext-network
+
+  redis:
+    image: redis:alpine
+    volumes:
+      - redisdata:/data
+    networks:
+      - emrnext-network
+
+  seq:
+    image: datalust/seq:latest
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - seqdata:/data
+    ports:
+      - "5341:80"
+    networks:
+      - emrnext-network
+
+networks:
+  emrnext-network:
+    driver: bridge
+
+volumes:
+  sqldata:
+  redisdata:
+  seqdata:

@@ -1,0 +1,46 @@
+# .NET Core
+**/bin/
+**/obj/
+*.dll
+*.exe
+
+# Node.js
+**/node_modules/
+npm-debug.log
+yarn-error.log
+
+# Frontend build
+**/build/
+**/dist/
+
+# Environment files
+*.env
+.env
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.bak
+
+# Logs
+*.log
+
+# macOS specific
+.DS_Store
+**/.DS_Store
+
+# Ignore Railway and other deployment configs
+**/railway-*
+
+# Ignore large dependency folders
+**/node_modules
+**/vendor
+
+# Ignore compiled output
+**/out/
+**/dist/

@@ -1,0 +1,76 @@
+{
+  "version": 2,
+  "name": "emrnext-production",
+  "services": [
+    {
+      "name": "backend",
+      "dockerfile": "./Dockerfile.backend",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Production",
+        "DATABASE_CONNECTION_STRING": "${RAILWAY_DATABASE_URL}",
+        "JWT_SECRET": "${RAILWAY_JWT_SECRET}",
+        "LOGGING_LEVEL": "Warning"
+      },
+      "scaling": {
+        "minReplicas": 2,
+        "maxReplicas": 10,
+        "cpu": {
+          "threshold": 70
+        },
+        "memory": {
+          "threshold": 80
+        }
+      }
+    },
+    {
+      "name": "frontend",
+      "dockerfile": "./Dockerfile.frontend",
+      "env": {
+        "NODE_ENV": "production",
+        "REACT_APP_API_URL": "${backend.RAILWAY_PUBLIC_URL}/api"
+      },
+      "scaling": {
+        "minReplicas": 2,
+        "maxReplicas": 5,
+        "cpu": {
+          "threshold": 60
+        }
+      }
+    },
+    {
+      "name": "database",
+      "image": "postgres:15",
+      "env": {
+        "POSTGRES_DB": "emrnext",
+        "POSTGRES_USER": "emrnext_admin"
+      },
+      "volumes": [
+        {
+          "name": "postgres-data",
+          "mountPath": "/var/lib/postgresql/data"
+        }
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend"
+    }
+  ],
+  "monitoring": {
+    "enabled": true,
+    "alerting": {
+      "email": "admin@emrnext.com",
+      "thresholds": {
+        "cpu": 90,
+        "memory": 85,
+        "errorRate": 5
+      }
+    }
+  }
+}

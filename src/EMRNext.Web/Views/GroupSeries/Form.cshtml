@@ -1,0 +1,204 @@
+@model EMRNext.Web.Models.GroupSeries.GroupSeriesDto
+@{
+    var isEdit = Model?.Id != null;
+    ViewData["Title"] = isEdit ? "Edit Group Series" : "Create Group Series";
+    Layout = "_GroupSeriesLayout";
+}
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post" class="needs-validation" novalidate>
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Id" />
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Basic Information</h5>
+                    <div class="form-group">
+                        <label asp-for="Name">Series Name</label>
+                        <input asp-for="Name" class="form-control" required />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Description">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="StartDate">Start Date</label>
+                                <input asp-for="StartDate" type="date" class="form-control" required />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="EndDate">End Date</label>
+                                <input asp-for="EndDate" type="date" class="form-control" required />
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="RecurrencePattern">Recurrence Pattern</label>
+                                <select asp-for="RecurrencePattern" class="form-control" required>
+                                    <option value="">Select Pattern</option>
+                                    <option value="Weekly">Weekly</option>
+                                    <option value="BiWeekly">Bi-Weekly</option>
+                                    <option value="Monthly">Monthly</option>
+                                </select>
+                                <span asp-validation-for="RecurrencePattern" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="MaxParticipants">Maximum Participants</label>
+                                <input asp-for="MaxParticipants" type="number" class="form-control" required min="1" />
+                                <span asp-validation-for="MaxParticipants" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Location & Schedule</h5>
+                    <div class="form-group">
+                        <div class="custom-control custom-switch">
+                            <input asp-for="IsVirtual" type="checkbox" class="custom-control-input" id="virtualSwitch">
+                            <label class="custom-control-label" for="virtualSwitch">Virtual Session</label>
+                        </div>
+                    </div>
+
+                    <div id="locationGroup">
+                        <div class="form-group">
+                            <label asp-for="Location">Location</label>
+                            <input asp-for="Location" class="form-control" required />
+                            <span asp-validation-for="Location" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div id="virtualGroup" style="display: none;">
+                        <div class="form-group">
+                            <label asp-for="MeetingLink">Meeting Link</label>
+                            <input asp-for="MeetingLink" class="form-control" />
+                            <span asp-validation-for="MeetingLink" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Settings</h5>
+                    <div class="form-group">
+                        <label asp-for="Status">Status</label>
+                        <select asp-for="Status" class="form-control" required>
+                            <option value="Draft">Draft</option>
+                            <option value="Active">Active</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="custom-control custom-switch">
+                            <input asp-for="AllowWaitlist" type="checkbox" class="custom-control-input" id="waitlistSwitch">
+                            <label class="custom-control-label" for="waitlistSwitch">Allow Waitlist</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="AppointmentTypeId">Appointment Type</label>
+                        <select asp-for="AppointmentTypeId" class="form-control" required>
+                            <option value="">Select Type</option>
+                            @foreach (var type in ViewBag.AppointmentTypes)
+                            {
+                                <option value="@type.Id">@type.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="AppointmentTypeId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="ProviderId">Provider</label>
+                        <select asp-for="ProviderId" class="form-control" required>
+                            <option value="">Select Provider</option>
+                            @foreach (var provider in ViewBag.Providers)
+                            {
+                                <option value="@provider.Id">@provider.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ProviderId" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> @(isEdit ? "Update" : "Create")
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle virtual session toggle
+            $('#virtualSwitch').change(function() {
+                if ($(this).is(':checked')) {
+                    $('#locationGroup').hide();
+                    $('#virtualGroup').show();
+                    $('#Location').prop('required', false);
+                    $('#MeetingLink').prop('required', true);
+                } else {
+                    $('#locationGroup').show();
+                    $('#virtualGroup').hide();
+                    $('#Location').prop('required', true);
+                    $('#MeetingLink').prop('required', false);
+                }
+            });
+
+            // Form validation
+            $('.needs-validation').submit(function(event) {
+                if (this.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                $(this).addClass('was-validated');
+            });
+
+            // Date validation
+            $('#EndDate').change(function() {
+                var startDate = new Date($('#StartDate').val());
+                var endDate = new Date($(this).val());
+                
+                if (endDate < startDate) {
+                    $(this).val($('#StartDate').val());
+                    alert('End date cannot be earlier than start date');
+                }
+            });
+        });
+    </script>
+}

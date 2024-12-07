@@ -1,0 +1,83 @@
+@model IEnumerable<EMRNext.Web.Models.GroupSeries.GroupSeriesDto>
+@{
+    ViewData["Title"] = "Group Series";
+    Layout = "_GroupSeriesLayout";
+}
+
+@section Actions {
+    @if (User.IsInRole("Admin") || User.IsInRole("Provider"))
+    {
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a asp-action="Create" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Create New Series
+            </a>
+        </div>
+    }
+}
+
+<div class="card-deck">
+    @foreach (var series in Model)
+    {
+        <div class="card mb-4" style="min-width: 300px; max-width: 400px;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">@series.Name</h5>
+                <span class="badge @(series.Status == "Active" ? "badge-success" : "badge-secondary")">
+                    @series.Status
+                </span>
+            </div>
+            <div class="card-body">
+                <p class="card-text">@series.Description</p>
+                <div class="mb-2">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar"></i> @series.StartDate.ToString("MMM dd, yyyy") - @series.EndDate.ToString("MMM dd, yyyy")
+                    </small>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">
+                        <i class="fas fa-users"></i> Max Participants: @series.MaxParticipants
+                    </small>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">
+                        <i class="fas fa-map-marker-alt"></i> @series.Location
+                        @if (series.IsVirtual)
+                        {
+                            <span class="badge badge-info ml-1">Virtual</span>
+                        }
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group" role="group">
+                    <a asp-action="Details" asp-route-id="@series.Id" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-info-circle"></i> Details
+                    </a>
+                    @if (User.IsInRole("Admin") || User.IsInRole("Provider"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@series.Id" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    }
+                    <a asp-action="Sessions" asp-route-id="@series.Id" class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-calendar-alt"></i> Sessions
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Enable tooltips
+            $('[data-toggle="tooltip"]').tooltip();
+
+            // Enable card hover effect
+            $('.card').hover(
+                function() { $(this).addClass('shadow-sm'); },
+                function() { $(this).removeClass('shadow-sm'); }
+            );
+        });
+    </script>
+}

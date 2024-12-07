@@ -1,0 +1,20 @@
+# Use official .NET Core SDK image
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build-env
+WORKDIR /app
+
+# Copy solution and restore dependencies
+COPY *.sln ./
+COPY src/EMRNext.Core/*.csproj ./src/EMRNext.Core/
+COPY src/EMRNext.Web/*.csproj ./src/EMRNext.Web/
+RUN dotnet restore
+
+# Copy entire project and build
+COPY . ./
+RUN dotnet publish -c Release -o out
+
+# Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:7.0
+WORKDIR /app
+COPY --from=build-env /app/out .
+EXPOSE 80
+ENTRYPOINT ["dotnet", "EMRNext.Web.dll"]

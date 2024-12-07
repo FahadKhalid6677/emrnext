@@ -1,0 +1,58 @@
+groups:
+  - name: system_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High CPU usage detected
+          description: CPU usage is above 80% for 5 minutes
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / process_virtual_memory_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High memory usage detected
+          description: Memory usage is above 85% for 5 minutes
+
+      - alert: SlowResponseTime
+        expr: rate(http_request_duration_milliseconds_sum[5m]) / rate(http_request_duration_milliseconds_count[5m]) > 2000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Slow response time detected
+          description: Average response time is above 2 seconds for 5 minutes
+
+  - name: business_alerts
+    rules:
+      - alert: HighAppointmentQueue
+        expr: appointment_queue_depth > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High appointment queue depth
+          description: Appointment queue depth is above 50 for 5 minutes
+
+      - alert: LowClaimsProcessingRate
+        expr: rate(claims_processed_total[5m]) / rate(claims_submitted_total[5m]) < 0.95
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Low claims processing rate
+          description: Claims processing success rate is below 95% for 5 minutes
+
+      - alert: SecurityViolation
+        expr: security_violation_total > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Security violation detected
+          description: One or more security violations have been detected

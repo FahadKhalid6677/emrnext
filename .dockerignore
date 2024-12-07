@@ -1,0 +1,30 @@
+# Ignore version control
+.git
+.gitignore
+
+# Ignore build artifacts
+**/bin/
+**/obj/
+**/build/
+**/dist/
+**/node_modules/
+
+# Ignore local configuration
+*.local
+.env
+.env.local
+
+# Ignore logs and temporary files
+**/*.log
+**/*.tmp
+**/temp/
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db

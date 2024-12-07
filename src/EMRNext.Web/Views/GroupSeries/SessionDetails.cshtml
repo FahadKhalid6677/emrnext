@@ -1,0 +1,332 @@
+@model EMRNext.Web.Models.GroupSeries.GroupSessionDto
+@{
+    ViewData["Title"] = "Session Details";
+    Layout = "_GroupSeriesLayout";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Session Information</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Date</small>
+                        <p>@Model.StartTime.ToString("MMM dd, yyyy")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Time</small>
+                        <p>@Model.StartTime.ToString("HH:mm") - @Model.EndTime.ToString("HH:mm")</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Location</small>
+                        <p>
+                            @if (Model.IsVirtual)
+                            {
+                                <a href="@Model.MeetingLink" target="_blank" class="text-info">
+                                    <i class="fas fa-video"></i> Virtual Meeting
+                                </a>
+                            }
+                            else
+                            {
+                                @Model.Location
+                            }
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Status</small>
+                        <p>
+                            <span class="badge @GetStatusBadgeClass(Model.Status)">
+                                @Model.Status
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                @if (User.IsInRole("Admin") || User.IsInRole("Provider"))
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <button type="button" class="btn btn-primary" onclick="editSession()">
+                                <i class="fas fa-edit"></i> Edit Session
+                            </button>
+                            <button type="button" class="btn btn-info" onclick="recordOutcomes()">
+                                <i class="fas fa-clipboard-check"></i> Record Outcomes
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Participants</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var participant in Model.Participants ?? Enumerable.Empty<EMRNext.Web.Models.GroupSeries.ParticipantDto>())
+                            {
+                                <tr>
+                                    <td>@participant.PatientName</td>
+                                    <td>
+                                        <span class="badge @GetParticipantStatusBadgeClass(participant.Status)">
+                                            @participant.Status
+                                        </span>
+                                    </td>
+                                    <td>@participant.Notes</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                    onclick="updateParticipantStatus('@participant.PatientId')">
+                                                <i class="fas fa-user-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-info"
+                                                    onclick="addParticipantNote('@participant.PatientId')">
+                                                <i class="fas fa-sticky-note"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Session Outcomes</h5>
+                @if (Model.Outcomes?.Any() == true)
+                {
+                    foreach (var outcome in Model.Outcomes)
+                    {
+                        <div class="mb-3">
+                            <small class="text-muted">@outcome.Category</small>
+                            <p>@outcome.Description</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">No outcomes recorded yet.</p>
+                }
+            </div>
+        </div>
+
+        @if (User.IsInRole("Admin") || User.IsInRole("Provider"))
+        {
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="list-group">
+                        <button type="button" class="list-group-item list-group-item-action"
+                                onclick="generateReport()">
+                            <i class="fas fa-file-alt"></i> Generate Report
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action"
+                                onclick="sendReminders()">
+                            <i class="fas fa-bell"></i> Send Reminders
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action"
+                                onclick="manageAttendance()">
+                            <i class="fas fa-clipboard-list"></i> Manage Attendance
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Outcome Recording Modal -->
+<div class="modal fade" id="outcomeModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Session Outcomes</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="outcomeCategory">Category</label>
+                    <select class="form-control" id="outcomeCategory">
+                        <option value="General">General</option>
+                        <option value="Progress">Progress</option>
+                        <option value="Challenges">Challenges</option>
+                        <option value="Goals">Goals</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="outcomeDescription">Description</label>
+                    <textarea class="form-control" id="outcomeDescription" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveOutcome()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function recordOutcomes() {
+            $('#outcomeModal').modal('show');
+        }
+
+        async function saveOutcome() {
+            const category = document.getElementById('outcomeCategory').value;
+            const description = document.getElementById('outcomeDescription').value;
+
+            try {
+                const response = await fetch(`/api/groupseries/@Model.SeriesId/sessions/@Model.Id/outcomes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ category, description })
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to save outcome');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while saving the outcome');
+            }
+        }
+
+        async function updateParticipantStatus(patientId) {
+            const status = prompt('Enter new status (Active/Absent/Cancelled):');
+            if (!status) return;
+
+            try {
+                const response = await fetch(`/api/groupseries/@Model.SeriesId/participants/@Model.Id/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ patientId, status })
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to update participant status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while updating participant status');
+            }
+        }
+
+        async function addParticipantNote(patientId) {
+            const note = prompt('Enter note:');
+            if (!note) return;
+
+            try {
+                const response = await fetch(`/api/groupseries/@Model.SeriesId/participants/@Model.Id/notes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ patientId, note })
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to add note');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while adding the note');
+            }
+        }
+
+        async function generateReport() {
+            try {
+                const response = await fetch(`/api/groupseries/@Model.SeriesId/sessions/@Model.Id/report`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'session-report.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    alert('Failed to generate report');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while generating the report');
+            }
+        }
+
+        async function sendReminders() {
+            try {
+                const response = await fetch(`/api/groupseries/@Model.SeriesId/sessions/@Model.Id/reminders`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    alert('Reminders sent successfully');
+                } else {
+                    alert('Failed to send reminders');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while sending reminders');
+            }
+        }
+
+        function manageAttendance() {
+            window.location.href = `/GroupSeries/Attendance/@Model.SeriesId/@Model.Id`;
+        }
+    </script>
+}
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "scheduled" => "badge-primary",
+            "in progress" => "badge-info",
+            "completed" => "badge-success",
+            "cancelled" => "badge-danger",
+            _ => "badge-secondary"
+        };
+    }
+
+    string GetParticipantStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "active" => "badge-success",
+            "absent" => "badge-warning",
+            "cancelled" => "badge-danger",
+            _ => "badge-secondary"
+        };
+    }
+}
