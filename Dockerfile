@@ -2,19 +2,19 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /app
 
-# Copy the solution file
+# Copy solution file
 COPY ["EMRNext.sln", "./"]
 
 # Copy project files
-COPY ["src/EMRNext.API/EMRNext.API.csproj", "src/EMRNext.API/"]
-COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "src/EMRNext.Core/"]
-COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "src/EMRNext.Infrastructure/"]
-COPY ["src/EMRNext.Shared/EMRNext.Shared.csproj", "src/EMRNext.Shared/"]
+COPY ["src/EMRNext.API/EMRNext.API.csproj", "EMRNext.API/"]
+COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "EMRNext.Core/"]
+COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "EMRNext.Infrastructure/"]
+COPY ["src/EMRNext.Shared/EMRNext.Shared.csproj", "EMRNext.Shared/"]
 
 # Restore dependencies
-RUN dotnet restore "src/EMRNext.API/EMRNext.API.csproj"
+RUN dotnet restore "EMRNext.API/EMRNext.API.csproj"
 
-# Copy the entire project
+# Copy entire project
 COPY . .
 
 # Set working directory
