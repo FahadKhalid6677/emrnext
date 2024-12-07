@@ -1,9 +1,9 @@
 [build]
-builder = "dotnet"
-buildCommand = "dotnet restore && dotnet publish -c Release -o ./publish"
-startCommand = "dotnet EMRNext.API.dll"
+builder = "dockerfile"
+dockerfilePath = "./Dockerfile"
 
 [deploy]
+startCommand = "dotnet EMRNext.API.dll"
 healthcheckPath = "/health"
 healthcheckTimeout = 120
 restartPolicy = "always"
