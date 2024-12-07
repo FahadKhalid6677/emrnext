@@ -33,7 +33,7 @@
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.5.1" />
     
     <!-- Integration and Communication -->
-    <PackageReference Include="NHapi" Version="2.5.0.6" />
+    <PackageReference Include="NHapi" Version="3.2.2" />
     <PackageReference Include="Polly" Version="7.2.3" />
     <PackageReference Include="CsvHelper" Version="30.0.1" />
     
