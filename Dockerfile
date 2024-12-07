@@ -2,8 +2,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /app
 
-# Copy solution and project files
+# Copy solution file
 COPY EMRNext.sln .
+
+# Copy project files
 COPY src/EMRNext.API/EMRNext.API.csproj ./EMRNext.API/
 COPY src/EMRNext.Core/EMRNext.Core.csproj ./EMRNext.Core/
 COPY src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj ./EMRNext.Infrastructure/
@@ -15,8 +17,10 @@ RUN dotnet restore "./EMRNext.API/EMRNext.API.csproj"
 # Copy entire project contents
 COPY . .
 
-# Build the project
+# Set working directory for build
 WORKDIR /app/src/EMRNext.API
+
+# Build and publish the project
 RUN dotnet build "EMRNext.API.csproj" -c Release -o /app/build
 RUN dotnet publish "EMRNext.API.csproj" -c Release -o /app/publish
 
