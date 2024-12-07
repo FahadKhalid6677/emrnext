@@ -8,7 +8,7 @@ WORKDIR /src
 COPY ["src/EMRNext.API/EMRNext.API.csproj", "EMRNext.API/"]
 COPY ["src/EMRNext.Core/EMRNext.Core.csproj", "EMRNext.Core/"]
 COPY ["src/EMRNext.Infrastructure/EMRNext.Infrastructure.csproj", "EMRNext.Infrastructure/"]
-RUN dotnet restore "EMRNext.API/EMRNext.API.csproj" /p:RestoreVerbosity=detailed
+RUN dotnet restore "EMRNext.API/EMRNext.API.csproj" --verbosity detailed --no-cache
 COPY . .
 WORKDIR "/src/EMRNext.API"
 RUN dotnet build "EMRNext.API.csproj" -c Release -o /app/build
